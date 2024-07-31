@@ -25,3 +25,5 @@ client_secret = your_client_secret
 
 Run `setup.py` file and wait for it to set the script up for first use. After "Media Downloader" shortcut is created move it to wherever you like.
 
+## Download
+[Press here](https://github.com/nothazel/media-downloader/releases/tag/latest)
