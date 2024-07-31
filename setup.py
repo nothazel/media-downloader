@@ -13,13 +13,7 @@ required_libraries = [
 
 source_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'source')
 
-def check_setup():
-    config_file = os.path.join(os.getcwd(), 'config.ini')
-    config_exists = os.path.exists(config_file)
-    if not config_exists:
-        return False
-    config = configparser.ConfigParser()
-    config.read(config_file)
+def check_setup(config):
     return config.getboolean('Setup', 'completed', fallback=False)
 
 def install_libraries():
@@ -63,14 +57,23 @@ def create_shortcut():
             error_file.write(f"Error creating shortcut: {e}")
 
 def main():
-    setup_completed = check_setup()
+    config_file = os.path.join(os.getcwd(), 'config.ini')
+    config = configparser.ConfigParser()
+    
+    if not os.path.exists(config_file):
+        # Create a new config file if it does not exist
+        config.add_section('Setup')
+        config.add_section('spotify')
+        config.set('spotify', 'client_id', 'your_client_id')
+        config.set('spotify', 'client_secret', 'your_client_secret')
+        with open(config_file, 'w') as f:
+            config.write(f)
+    
+    config.read(config_file)
+    setup_completed = check_setup(config)
 
     if not setup_completed:
         install_libraries()
-
-        config_file = os.path.join(os.getcwd(), 'config.ini')
-        config = configparser.ConfigParser()
-        config.read(config_file)
         if not config.has_section('Setup'):
             config.add_section('Setup')
         config.set('Setup', 'completed', 'True')
