@@ -4,8 +4,8 @@ This Python script enables you to download audio / video from YouTube videos and
 
 ## Requirements
 
-- Python (duh)
-- Spotify API Client Credentials (Optional) (If you want spotify functionality)
+- `Python` (duh)
+- `Spotify API Client Credentials` (Optional) (If you want spotify functionality)
 - `ffmpeg`  (go check tutorial if don't know how to install them) or [click this](https://www.gyan.dev/ffmpeg/builds/ffmpeg-git-full.7z)
 
 ## Installation for Spotify Command
