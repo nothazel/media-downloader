@@ -11,7 +11,7 @@ This Python script enables you to download audio / video from YouTube videos and
 ## Installation for Spotify Command
 
 
- In `config.ini` file that is in the root directory of the script create the following:
+ In `config.ini` file that is in the root directory of the script (if not run setup.py) create the following:
  you can get your Spotify API Client Credentials from [Create Spotify App](https://developer.spotify.com/dashboard/create) Only tick Web API as we'll use only that and after that you can get your Credentials from Settings.
 ```
 [spotify]
