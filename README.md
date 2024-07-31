@@ -1,4 +1,4 @@
-#Media Downloader
+# Media Downloader
 
 This Python script enables you to download audio / video from YouTube videos and Spotify playlists. It supports keyword searches, direct links for YouTube, and playlist URLs for Spotify.
 
