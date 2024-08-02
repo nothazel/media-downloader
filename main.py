@@ -16,7 +16,7 @@ import unicodedata
 terminate_download = False
 downloaded_count = 0
 download_queue = Queue()
-app = None 
+app = None
 downloading = False
 
 # Initialize Spotify API
@@ -41,9 +41,9 @@ def center_window(window, width, height):
 
 # GUI
 def initialize_gui():
-    global app
+    global app, quality_menu
     app = ctk.CTk()
-    center_window(app, 600, 500)
+    center_window(app, 600, 800)
     app.title("Media Downloader")
 
     spotify_logo = CTkImage(Image.open(os.path.join(source_folder, "spotify_logo.png")), size=(20, 20))
@@ -51,19 +51,24 @@ def initialize_gui():
     sanitize_logo = CTkImage(Image.open(os.path.join(source_folder, "sanitize_logo.png")), size=(20, 20))
 
     # URL Entry and Label
-    url_label = ctk.CTkLabel(app, text="Enter Youtube URL or Music Name:")
+    url_label = ctk.CTkLabel(app, text="Enter YouTube URL or Music Name:")
     url_label.pack(pady=10)
 
     global url_entry
     url_entry = ctk.CTkEntry(app, width=500)
     url_entry.pack(pady=10)
 
-    # Dropdown menu to select audio or video
+    # Dropdown menu to select audio or video default
     global content_type_var
     content_type_var = ctk.StringVar(value="Audio")
-
-    content_type_menu = ctk.CTkOptionMenu(app, variable=content_type_var, values=["Audio", "Video"])
+    content_type_menu = ctk.CTkOptionMenu(app, variable=content_type_var, values=["Audio", "Video"], command=update_quality_menu)
     content_type_menu.pack(pady=10)
+
+    # Dropdown menu for quality selection default
+    global quality_var
+    quality_var = ctk.StringVar(value="320bps")
+    quality_menu = ctk.CTkOptionMenu(app, variable=quality_var, values=["320Kbps", "192Kbps", "128Kbps"])
+    quality_menu.pack(pady=10)
 
     # Create buttons with logos
     button_frame = ctk.CTkFrame(app)
@@ -83,18 +88,30 @@ def initialize_gui():
     progress_label = ctk.CTkLabel(app, text="")
     progress_label.pack(pady=10)
 
+    global progress_percentage
+    progress_percentage = ctk.CTkLabel(app, text="0% complete")
+    progress_percentage.pack(pady=5)
+
     global progress_bar
     progress_bar = ctk.CTkProgressBar(app, width=500)
     progress_bar.pack(pady=10)
     progress_bar.set(0)
 
     global log_text
-    log_text = ctk.CTkTextbox(app, width=500, height=100)
+    log_text = ctk.CTkTextbox(app, width=500, height=300)
     log_text.pack(pady=10)
-    
+
     app.protocol("WM_DELETE_WINDOW", on_closing)
     app.mainloop()
 
+def update_quality_menu(choice):
+    global quality_var, quality_menu
+    if choice == "Audio":
+        quality_var.set("320Kbps")
+        quality_menu.configure(values=["320Kbps", "192Kbps", "128Kbps"])
+    else:  # Video
+        quality_var.set("2160p")
+        quality_menu.configure(values=["2160p", "1440p", "1080p", "720p", "480p"])
 
 # Spotify functions
 def open_spotify_window():
@@ -151,7 +168,7 @@ def download_content(query, content_type="audio"):
     os.makedirs(output_dir, exist_ok=True)
 
     ydl_opts = {
-        'format': 'bestaudio/best' if content_type == "audio" else 'bestvideo[height>=1080]+bestaudio/best',
+        'format': f'bestaudio/best' if content_type == "audio" else f'bestvideo[height<={int(quality_var.get()[:-1])}]+bestaudio/best',
         'default_search': 'auto' if "youtube.com" in query or "youtu.be" in query else 'ytsearch',
         'progress_hooks': [progress_hook],
         'noplaylist': False if "youtube.com" in query or "youtu.be" in query else True,
@@ -160,7 +177,7 @@ def download_content(query, content_type="audio"):
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
-            'preferredquality': '320',
+            'preferredquality': quality_var.get(),
         }] if content_type == "audio" else [{
             'key': 'FFmpegVideoConvertor',
             'preferedformat': 'mp4',
@@ -170,13 +187,10 @@ def download_content(query, content_type="audio"):
     try:
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             log_message(f"Starting download: {query}")
-            if "youtube.com" in query or "youtu.be" in query:
-                ydl.download([query])
-            else:
-                ydl.download([f"ytsearch:{query}"])
+            ydl.download([query])
 
-            progress_label.configure(text="Download and conversion complete!" if content_type == "audio" else "Download complete!")
-            log_message("Download and conversion complete!" if content_type == "audio" else "Download complete!")
+            progress_label.configure(text="Download complete!")
+            log_message("Download and conversion complete!")
             downloaded_count += 1
 
     except Exception as e:
@@ -192,116 +206,71 @@ def progress_hook(d):
 
     if d['status'] == 'downloading':
         try:
-            progress_str = d.get('_percent_str', '0%')
-            progress_str = strip_ansi_codes(progress_str).strip('%')
-            progress = float(progress_str)
-            progress_bar.set(progress / 100)
-            progress_label.configure(text=f"Downloading: {progress_str}% complete")
-        except Exception as e:
-            print(f"Error converting percentage: {e}")
-            progress_label.configure(text="Error updating progress")
+            progress_str = d.get('_percent_str', '0.00%')
+            progress_percentage.configure(text=f"{progress_str} complete")
+            progress = float(progress_str.replace('%', '').strip()) / 100.0
+            progress_bar.set(progress)
+        except Exception:
+            pass
     elif d['status'] == 'finished':
-        progress_label.configure(text="Converting to MP3..." if d['filename'].endswith('.mp3') else "Processing...")
         progress_bar.set(1)
-        log_message(f"Download complete: {d['filename']}")
-        if not download_queue.empty():
-            next_track = download_queue.get()
-            threading.Thread(target=download_content, args=(next_track,)).start()
+        log_message("Download finished. Processing...")
 
 # Utility functions
 def log_message(message):
     log_text.insert(ctk.END, message + "\n")
     log_text.see(ctk.END)
 
-def strip_ansi_codes(text):
-    ansi_escape = re.compile(r'\x1B[@-_][0-?]*[ -/]*[@-~]')
-    return ansi_escape.sub('', text)
-
 def sanitize_filename(filename):
-    replacements = {'Ö': 'O', 'Ç': 'C', 'Ğ': 'G', 'Ü': 'U', 'Ş': 'S', 'ö': 'o', 'ç': 'c', 'ğ': 'g', 'ü': 'u', 'ş': 's'}
-    for src, target in replacements.items():
-        filename = filename.replace(src, target)
+    replacements = {'Ö': 'O', 'Ç': 'C', 'Ğ': 'G', 'Ü': 'U', 'Ş': 'S'}
+    nfkd_form = unicodedata.normalize('NFKD', filename)
+    return ''.join(replacements.get(char, char) for char in nfkd_form if not unicodedata.combining(char))
 
-    filename = ''.join(char for char in filename if ord(char) < 128)
-    filename = unicodedata.normalize('NFKD', filename).encode('ascii', 'ignore').decode('ascii')
-    filename = re.sub(r'\s+', ' ', filename).strip().replace('_', ' ')
-    return filename
-
-# Event handlers
 def on_download():
-    global downloading
-    global downloaded_count
-    url = url_entry.get().strip()
-    if not url:
-        messagebox.showerror("Error", "Please enter a URL or music name")
+    global terminate_download
+    terminate_download = False
+    query = url_entry.get().strip()
+    if not query:
+        messagebox.showerror("Error", "Please enter a valid URL or search query.")
         return
 
-    content_type = content_type_var.get()  # Get the selected content type
+    content_type = content_type_var.get().lower()
+    download_queue.put((query, content_type))
+    start_download_thread()
 
-    log_text.delete(1.0, ctk.END)
-    downloaded_count = 0
-    progress_label.configure(text="Starting download...")
-    threading.Thread(target=fetch_and_download, args=(url, content_type == "Video")).start()
-
-
-def fetch_and_download(url, video=False):
+def start_download_thread():
     global downloading
-    if "spotify.com" in url:
-        tracks = fetch_spotify_playlist_tracks(url)
-        for track in tracks:
-            download_queue.put(track)
-        if not download_queue.empty():
-            next_track = download_queue.get()
-            threading.Thread(target=download_content, args=(next_track,)).start()
-    else:
-        threading.Thread(target=download_content, args=(url, "video" if video else "audio")).start()
+    if not downloading:
+        downloading = True
+        download_thread = threading.Thread(target=process_download_queue)
+        download_thread.start()
 
-def on_download_spotify(url):
-    if not url:
-        messagebox.showerror("Error", "Please enter a Spotify playlist URL")
-        return
-
-    log_text.delete(1.0, ctk.END)
-    progress_label.configure(text="Starting Spotify download...")
-    threading.Thread(target=fetch_and_download, args=(url,)).start()
+def process_download_queue():
+    global downloading
+    while not download_queue.empty():
+        query, content_type = download_queue.get()
+        download_content(query, content_type)
+    downloading = False
 
 def on_sanitize():
-    global downloading
+    downloads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'downloads')
+    for filename in os.listdir(downloads_dir):
+        sanitized_name = sanitize_filename(filename)
+        os.rename(os.path.join(downloads_dir, filename), os.path.join(downloads_dir, sanitized_name))
+    log_message("Sanitization complete.")
 
-    if downloading:
-        messagebox.showwarning("Warning", "Download in progress. Please wait until downloads are complete.")
-        return
-
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(script_dir, 'downloads')
-
-    try:
-        renamed_any_file = False
-
-        for filename in os.listdir(output_dir):
-            original_name = filename
-            sanitized_name = sanitize_filename(filename)
-            if filename != sanitized_name:
-                os.rename(os.path.join(output_dir, filename), os.path.join(output_dir, sanitized_name))
-                log_message(f"{original_name} -> {sanitized_name}")
-                renamed_any_file = True
-
-        if renamed_any_file:
-            log_message("Filenames have been sanitized.")
-        else:
-            log_message("No filenames needed sanitization.")
-
-    except Exception as e:
-        log_message(f"Error: {e}")
+def on_download_spotify(playlist_url):
+    tracks = fetch_spotify_playlist_tracks(playlist_url)
+    if tracks:
+        for track in tracks:
+            download_queue.put((track, "audio"))
+        start_download_thread()
 
 def on_closing():
     global terminate_download
-    terminate_download = True
-    progress_label.configure(text="Stopping download...")
-    log_message("Stopping download...")
-    if app:
+    if messagebox.askokcancel("Quit", "Do you want to quit?"):
+        terminate_download = True
         app.destroy()
 
-# Main program entry point
 if __name__ == "__main__":
     initialize_gui()
