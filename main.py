@@ -15,7 +15,12 @@ import subprocess
 import sys
 
 # Run the update checker in the background
-subprocess.Popen([sys.executable, 'checkupdate.py'])
+try:
+    subprocess.Popen([sys.executable, 'checkupdate.py'])
+except FileNotFoundError:
+    print("Update checker script not found. Continuing without update checks.")
+except Exception as e:
+    print(f"Error starting update checker: {e}")
 
 # Global variables
 terminate_download = False
