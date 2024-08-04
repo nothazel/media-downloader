@@ -49,6 +49,7 @@ def initialize_gui():
     spotify_logo = CTkImage(Image.open(os.path.join(source_folder, "spotify_logo.png")), size=(20, 20))
     download_logo = CTkImage(Image.open(os.path.join(source_folder, "download_logo.png")), size=(20, 20))
     sanitize_logo = CTkImage(Image.open(os.path.join(source_folder, "sanitize_logo.png")), size=(20, 20))
+    folder_logo = CTkImage(Image.open(os.path.join(source_folder, "folder_logo.png")), size=(20, 20))
 
     # URL Entry and Label
     url_label = ctk.CTkLabel(app, text="Enter YouTube URL or Music Name:")
@@ -80,9 +81,11 @@ def initialize_gui():
     sanitize_button = ctk.CTkButton(button_frame, image=sanitize_logo, text="", command=on_sanitize, width=40, height=40, corner_radius=10)
     sanitize_button.pack(side=ctk.LEFT, padx=5)
 
-    # Create Spotify button with the logo
     spotify_button = ctk.CTkButton(app, image=spotify_logo, text="", command=open_spotify_window, width=40, height=40, corner_radius=10)
     spotify_button.pack(pady=10)
+
+    folders_button = ctk.CTkButton(app, image=folder_logo, text="", command=open_downloads_folder, width=40, height=40, corner_radius=10)
+    folders_button.pack(pady=10)
 
     global progress_label
     progress_label = ctk.CTkLabel(app, text="")
@@ -265,6 +268,10 @@ def on_download_spotify(playlist_url):
         for track in tracks:
             download_queue.put((track, "audio"))
         start_download_thread()
+
+def open_downloads_folder():
+    downloads_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'downloads')
+    os.startfile(downloads_dir)
 
 def on_closing():
     global terminate_download
