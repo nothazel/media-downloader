@@ -72,7 +72,7 @@ def initialize_gui():
 
     # Dropdown menu for quality selection default
     global quality_var
-    quality_var = ctk.StringVar(value="320bps")
+    quality_var = ctk.StringVar(value="320Kbps")
     quality_menu = ctk.CTkOptionMenu(app, variable=quality_var, values=["320Kbps", "192Kbps", "128Kbps"])
     quality_menu.pack(pady=10)
 
