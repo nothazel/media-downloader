@@ -11,6 +11,11 @@ import customtkinter as ctk
 from customtkinter import CTkImage
 from PIL import Image
 import unicodedata
+import subprocess
+import sys
+
+# Run the update checker in the background
+subprocess.Popen([sys.executable, 'checkupdate.py'])
 
 # Global variables
 terminate_download = False
