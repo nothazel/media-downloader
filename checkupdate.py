@@ -43,6 +43,13 @@ def show_no_update_message():
     root.withdraw()
     messagebox.showinfo("Information", "The program is up to date.")
 
+def terminate_running_instance(script_name):
+    try:
+        subprocess.run(['taskkill', '/f', '/im', sys.executable], check=True)
+        print(f"Terminated {script_name} process.")
+    except subprocess.CalledProcessError:
+        print(f"Failed to terminate {script_name} process or it is not running.")
+
 def check_for_updates():
     remote_hash, remote_content = get_remote_file_hash(MAIN_SCRIPT_SOURCE)
     if not remote_hash:
@@ -53,6 +60,7 @@ def check_for_updates():
     if local_hash != remote_hash:
         print("Newer version found.")
         if ask_for_update():
+            terminate_running_instance('main.py')
             update_main_script(remote_content)
             subprocess.Popen([sys.executable, 'main.py'])
             sys.exit()
