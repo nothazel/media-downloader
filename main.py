@@ -56,10 +56,25 @@ def initialize_gui():
     center_window(app, 600, 800)
     app.title("Media Downloader")
 
-    spotify_logo = CTkImage(Image.open(os.path.join(source_folder, "spotify_logo.png")), size=(20, 20))
-    download_logo = CTkImage(Image.open(os.path.join(source_folder, "download_logo.png")), size=(20, 20))
-    sanitize_logo = CTkImage(Image.open(os.path.join(source_folder, "sanitize_logo.png")), size=(20, 20))
-    folder_logo = CTkImage(Image.open(os.path.join(source_folder, "folder_logo.png")), size=(20, 20))
+    try:
+        spotify_logo = CTkImage(Image.open(os.path.join(source_folder, "spotify_logo.png")), size=(20, 20))
+    except Exception:
+        spotify_logo = None
+
+    try:
+        download_logo = CTkImage(Image.open(os.path.join(source_folder, "download_logo.png")), size=(20, 20))
+    except Exception:
+        download_logo = None
+
+    try:
+        sanitize_logo = CTkImage(Image.open(os.path.join(source_folder, "sanitize_logo.png")), size=(20, 20))
+    except Exception:
+        sanitize_logo = None
+
+    try:
+        folder_logo = CTkImage(Image.open(os.path.join(source_folder, "folder_logo.png")), size=(20, 20))
+    except Exception:
+        folder_logo = None
 
     # URL Entry and Label
     url_label = ctk.CTkLabel(app, text="Enter YouTube URL or Music Name:")
@@ -81,20 +96,20 @@ def initialize_gui():
     quality_menu = ctk.CTkOptionMenu(app, variable=quality_var, values=["320Kbps", "192Kbps", "128Kbps"])
     quality_menu.pack(pady=10)
 
-    # Create buttons with logos
+    # Create buttons with logos or fallback text
     button_frame = ctk.CTkFrame(app)
     button_frame.pack(pady=10)
 
-    download_button = ctk.CTkButton(button_frame, image=download_logo, text="", command=on_download, width=40, height=40, corner_radius=10)
+    download_button = ctk.CTkButton(button_frame, image=download_logo, text="Download" if download_logo is None else "", command=on_download, width=40, height=40, corner_radius=10)
     download_button.pack(side=ctk.LEFT, padx=5)
 
-    sanitize_button = ctk.CTkButton(button_frame, image=sanitize_logo, text="", command=on_sanitize, width=40, height=40, corner_radius=10)
+    sanitize_button = ctk.CTkButton(button_frame, image=sanitize_logo, text="Sanitize File Names" if sanitize_logo is None else "", command=on_sanitize, width=40, height=40, corner_radius=10)
     sanitize_button.pack(side=ctk.LEFT, padx=5)
 
-    spotify_button = ctk.CTkButton(app, image=spotify_logo, text="", command=open_spotify_window, width=40, height=40, corner_radius=10)
+    spotify_button = ctk.CTkButton(app, image=spotify_logo, text="Spotify Options" if spotify_logo is None else "", command=open_spotify_window, width=40, height=40, corner_radius=10)
     spotify_button.pack(pady=10)
 
-    folders_button = ctk.CTkButton(app, image=folder_logo, text="", command=open_downloads_folder, width=40, height=40, corner_radius=10)
+    folders_button = ctk.CTkButton(app, image=folder_logo, text="Open Downloads Folder" if folder_logo is None else "", command=open_downloads_folder, width=40, height=40, corner_radius=10)
     folders_button.pack(pady=10)
 
     global progress_label
